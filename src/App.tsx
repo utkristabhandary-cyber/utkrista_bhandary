@@ -17,9 +17,8 @@ import { ShieldCheck } from 'lucide-react';
 
 function PortfolioMainContent() {
   const [activeSection, setActiveSection] = useState<string>('home');
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
-  const { isOwner } = useAuth();
+  const { isOwner, openAuthModal, closeAuthModal } = useAuth();
   const { settings } = usePortfolioContent();
 
   useEffect(() => {
@@ -37,7 +36,7 @@ function PortfolioMainContent() {
         if (isOwner) {
           setIsDashboardOpen((prev) => !prev);
         } else {
-          setIsAuthModalOpen(true);
+          openAuthModal();
         }
       }
     };
@@ -47,7 +46,7 @@ function PortfolioMainContent() {
         if (isOwner) {
           setIsDashboardOpen(true);
         } else {
-          setIsAuthModalOpen(true);
+          openAuthModal();
         }
       }
     };
@@ -60,7 +59,7 @@ function PortfolioMainContent() {
       if (isOwner) {
         setIsDashboardOpen(true);
       } else {
-        setIsAuthModalOpen(true);
+        openAuthModal();
       }
     }
 
@@ -68,7 +67,7 @@ function PortfolioMainContent() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('hashchange', handleHashChange);
     };
-  }, [isOwner]);
+  }, [isOwner, openAuthModal]);
 
   useEffect(() => {
     const sections = [
@@ -107,7 +106,14 @@ function PortfolioMainContent() {
     if (isOwner) {
       setIsDashboardOpen(true);
     } else {
-      setIsAuthModalOpen(true);
+      openAuthModal();
+    }
+  };
+
+  const handleCloseAuthModal = () => {
+    closeAuthModal();
+    if (window.location.hash === '#cms' || window.location.hash === '#admin') {
+      history.replaceState(null, '', window.location.pathname + window.location.search);
     }
   };
 
@@ -153,12 +159,8 @@ function PortfolioMainContent() {
 
       {/* Authentication & Owner Verification Modal */}
       <AuthEntryModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-        onOpenDashboard={() => {
-          setIsAuthModalOpen(false);
-          setIsDashboardOpen(true);
-        }}
+        onClose={handleCloseAuthModal}
+        onOpenDashboard={() => setIsDashboardOpen(true)}
       />
     </div>
   );

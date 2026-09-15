@@ -14,8 +14,6 @@ interface AuthContextType {
   closeAuthModal: () => void;
   showVisitorPrompt: boolean;
   dismissVisitorPrompt: () => void;
-  unauthorizedAttempt: { email: string; message: string } | null;
-  clearUnauthorizedAttempt: () => void;
   canonicalOwnerEmail: string;
 }
 
@@ -24,7 +22,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<AuthSession>(authService.getSession());
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [unauthorizedAttempt, setUnauthorizedAttempt] = useState<{ email: string; message: string } | null>(null);
 
   // Show visitor prompt on first visit if user has never chosen a mode and is not authenticated
   const [showVisitorPrompt, setShowVisitorPrompt] = useState<boolean>(() => {
@@ -43,41 +40,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const signIn = (email: string, name: string, avatar?: string) => {
     const result = authService.signIn(email, name, avatar);
+    // Non-owner accounts are treated as visitors: no dashboard, standard browsing.
     if (!result.isOwner) {
-      setUnauthorizedAttempt({
-        email,
-        message: result.message || 'Owner access is restricted to the portfolio owner.'
-      });
-    } else {
-      setUnauthorizedAttempt(null);
-      setShowAuthModal(false);
-      setShowVisitorPrompt(false);
+      authService.setVisitorMode();
     }
+    setShowAuthModal(false);
+    setShowVisitorPrompt(false);
     return result;
   };
 
   const signOut = () => {
     authService.signOut();
-    setUnauthorizedAttempt(null);
   };
 
   const openAuthModal = () => {
-    setUnauthorizedAttempt(null);
     setShowAuthModal(true);
   };
 
   const closeAuthModal = () => {
     setShowAuthModal(false);
-    setUnauthorizedAttempt(null);
   };
 
   const dismissVisitorPrompt = () => {
     authService.setVisitorMode();
     setShowVisitorPrompt(false);
-  };
-
-  const clearUnauthorizedAttempt = () => {
-    setUnauthorizedAttempt(null);
   };
 
   return (
@@ -94,8 +80,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         closeAuthModal,
         showVisitorPrompt,
         dismissVisitorPrompt,
-        unauthorizedAttempt,
-        clearUnauthorizedAttempt,
         canonicalOwnerEmail: CANONICAL_OWNER_EMAIL
       }}
     >
