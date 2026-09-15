@@ -162,6 +162,15 @@ class AuthService {
       // Ignore
     }
   }
+
+  /**
+   * Mock Google OAuth callback. Returns the authenticated Google account's
+   * email and name. In production this is replaced by the real Google
+   * Identity Services credential response payload.
+   */
+  public async simulateGoogleAuth(): Promise<{ email: string; name: string }> {
+    return { email: CANONICAL_OWNER_EMAIL, name: 'Utkrista Bhandary' };
+  }
 }
 
 export const authService = new AuthService();

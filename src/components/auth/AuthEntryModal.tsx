@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { authService } from '../../services/authService';
 import { X, ArrowRight } from 'lucide-react';
 
 interface AuthEntryModalProps {
@@ -22,8 +23,7 @@ export const AuthEntryModal: React.FC<AuthEntryModalProps> = ({ onClose, onOpenD
     closeAuthModal,
     showVisitorPrompt,
     dismissVisitorPrompt,
-    signIn,
-    canonicalOwnerEmail
+    signIn
   } = useAuth();
 
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -37,16 +37,19 @@ export const AuthEntryModal: React.FC<AuthEntryModalProps> = ({ onClose, onOpenD
     onClose?.();
   };
 
-  const handleContinueWithGoogle = () => {
+  const handleContinueWithGoogle = async () => {
     if (isAuthenticating) return;
     setIsAuthenticating(true);
-    setTimeout(() => {
-      const result = signIn(canonicalOwnerEmail, 'Utkrista Bhandary');
-      setIsAuthenticating(false);
+    try {
+      const { email, name } = await authService.simulateGoogleAuth();
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      const result = signIn(email, name);
       if (result.isOwner) {
         onOpenDashboard?.();
       }
-    }, 400);
+    } finally {
+      setIsAuthenticating(false);
+    }
   };
 
   const handleContinueAsVisitor = () => {
